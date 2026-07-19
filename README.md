@@ -1,56 +1,28 @@
-# Welcome to your Expo app 👋
+# Klozet 👕
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Tu closet digital con IA, 100% gratis y local. React Native (Expo) + Supabase + Ollama.
 
-## Get started
+## Qué hace
+- **Auth** con Supabase (correo + contraseña) y perfil con tus medidas (altura, peso, pecho, cintura, cadera, tallas).
+- **Sube una foto de una prenda** → la IA local le quita el fondo (rembg), detecta tipo, tela/material, patrón, corte, colores (con hex), estilos y temporadas (gemma3:12b visión).
+- **Vista 3D**: arrastra con el dedo para girar la prenda recortada.
+- **Maniquí** escalado con tus medidas reales, vístelo tocando prendas.
+- **Outfits con IA**: combina tu ropa por teoría del color y estilo (casual, formal, semiformal, estético, old money, streetwear, deportivo) con razón y puntuación.
 
-1. Install dependencies
+## Puesta en marcha (una sola vez)
+1. **Base de datos**: abre el SQL Editor de tu proyecto Supabase y pega `supabase/schema.sql` → Run.
+   (El bucket de storage `garments` ya está creado.)
+2. **(Recomendado)** En Supabase → Authentication → Sign In / Providers → Email: desactiva **Confirm email** para entrar sin verificación.
 
-   ```bash
-   npm install
-   ```
+## Uso diario
+1. **IA local**: doble clic a `start-ai.bat` (necesita Ollama corriendo con `gemma3:12b`). La primera vez instala dependencias y descarga el modelo de segmentación.
+2. **App**:
+   - Web: `npm run web`
+   - Teléfono: `npm start` y escanea el QR con Expo Go. En `.env` cambia `EXPO_PUBLIC_AI_URL` a la IP LAN de tu PC (ej. `http://192.168.1.50:8000`) para que el teléfono llegue a la IA.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Estructura
+- `src/app/` — pantallas (expo-router): auth, onboarding, closet, añadir prenda, detalle 3D, outfits, generador, maniquí, perfil.
+- `src/lib/` — supabase, cliente IA, tipos, tema.
+- `src/components/` — UI, tarjeta de prenda, visor 3D, maniquí SVG.
+- `ai-server/` — FastAPI: `/process` (rembg + análisis con visión) y `/outfits` (estilista).
+- `supabase/schema.sql` — tablas + RLS + políticas de storage.

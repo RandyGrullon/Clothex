@@ -34,6 +34,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Klozet necesita acceso a tus fotos para subir prendas de tu closet.",
+          "cameraPermission": "Klozet necesita la cámara para tomar fotos de tu ropa."
+        }
       ]
     ],
     "experiments": {

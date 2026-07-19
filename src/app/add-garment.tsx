@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Mannequin } from '@/components/mannequin';
 import { Button, Chip, Input } from '@/components/ui';
 import { processGarment } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { addGarment } from '@/lib/data';
 import { font, T } from '@/lib/theme';
-import { CATEGORIES, STYLES, type Category, type GarmentAnalysis } from '@/lib/types';
+import { CATEGORIES, STYLES, type Category, type Garment, type GarmentAnalysis } from '@/lib/types';
 
 type Step = 'pick' | 'processing' | 'review';
 
@@ -22,7 +23,7 @@ const PROCESS_MSGS = [
 ];
 
 export default function AddGarment() {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const [step, setStep] = useState<Step>('pick');
   const [originalB64, setOriginalB64] = useState<string | null>(null);
   const [cutoutB64, setCutoutB64] = useState<string | null>(null);
@@ -39,6 +40,18 @@ export default function AddGarment() {
 
   const pick = async (fromCamera: boolean) => {
     setError('');
+    // Pedir permiso ANTES de abrir cámara/galería (si no, lanza excepción).
+    const perm = fromCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setError(
+        fromCamera
+          ? 'Necesito permiso de cámara. Actívalo en los ajustes del teléfono.'
+          : 'Necesito permiso para acceder a tus fotos. Actívalo en los ajustes.',
+      );
+      return;
+    }
     const opts: ImagePicker.ImagePickerOptions = {
       mediaTypes: ['images'],
       quality: 0.85,
@@ -122,6 +135,25 @@ export default function AddGarment() {
 
         {step === 'review' && analysis && (
           <View style={{ gap: 18, marginTop: 18 }}>
+            <View style={s.mannequinBox}>
+              <Text style={[font.label, { color: 'rgba(255,255,255,0.5)', marginBottom: 8 }]}>
+                Cómo te queda
+              </Text>
+              <Mannequin
+                variant="black"
+                width={150}
+                profile={profile}
+                garments={[
+                  {
+                    id: 'preview',
+                    category: analysis.category,
+                    cutout_url: cutoutB64 ? `data:image/png;base64,${cutoutB64}` : null,
+                    image_url: null,
+                  } as Garment,
+                ]}
+              />
+            </View>
+
             <View style={s.cutoutBox}>
               <Image
                 source={{ uri: `data:image/png;base64,${cutoutB64}` }}
@@ -218,6 +250,12 @@ export default function AddGarment() {
 const s = StyleSheet.create({
   container: { padding: 24, paddingBottom: 60 },
   preview: { width: 220, height: 220, borderRadius: 24, backgroundColor: T.surfaceSoft },
+  mannequinBox: {
+    alignItems: 'center',
+    backgroundColor: '#0E0D0A',
+    borderRadius: 24,
+    paddingVertical: 20,
+  },
   cutoutBox: {
     height: 260,
     borderRadius: 24,

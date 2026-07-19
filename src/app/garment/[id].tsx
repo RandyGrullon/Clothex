@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Text, View 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Garment3D } from '@/components/garment-3d';
+import { Mannequin } from '@/components/mannequin';
 import { Button, Card, Chip, ColorDots, Row } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { deleteGarment, getGarment } from '@/lib/data';
@@ -15,6 +16,7 @@ export default function GarmentDetail() {
   const { profile } = useAuth();
   const [garment, setGarment] = useState<Garment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'3d' | 'mannequin'>('3d');
 
   useEffect(() => {
     getGarment(id).then((g) => {
@@ -60,12 +62,25 @@ export default function GarmentDetail() {
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 60 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Button title="←" onPress={() => router.back()} variant="ghost" small />
-          <Text style={font.small}>Arrastra para girar en 3D</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Chip label="Prenda 3D" active={view === '3d'} onPress={() => setView('3d')} />
+            <Chip label="En ti" active={view === 'mannequin'} onPress={() => setView('mannequin')} />
+          </View>
         </View>
 
-        <View style={{ alignItems: 'center', marginVertical: 16 }}>
-          <Garment3D uri={uri} size={290} />
-        </View>
+        {view === '3d' ? (
+          <View style={{ alignItems: 'center', marginVertical: 16 }}>
+            <Garment3D uri={uri} size={290} />
+            <Text style={[font.small, { marginTop: 8 }]}>Arrastra para girar en 3D</Text>
+          </View>
+        ) : (
+          <View style={s.mannequinBox}>
+            <Mannequin variant="black" width={175} profile={profile} garments={[garment]} />
+            <Text style={[font.small, { color: 'rgba(255,255,255,0.5)', marginTop: 4 }]}>
+              Vista previa en maniquí
+            </Text>
+          </View>
+        )}
 
         <Text style={font.title}>{garment.name}</Text>
         <View style={[s.wrap, { marginTop: 10 }]}>
@@ -120,4 +135,11 @@ export default function GarmentDetail() {
 const s = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mannequinBox: {
+    alignItems: 'center',
+    backgroundColor: '#0E0D0A',
+    borderRadius: 24,
+    paddingVertical: 20,
+    marginVertical: 16,
+  },
 });

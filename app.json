@@ -8,9 +8,11 @@
     "scheme": "klozet",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.randygrullon.klozet"
     },
     "android": {
+      "package": "com.randygrullon.klozet",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

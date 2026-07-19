@@ -1,0 +1,63 @@
+name: EAS Build
+
+# Se dispara al hacer push a main, o manualmente desde la pestaña Actions
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ─────────────── ANDROID (APK/AAB — sin restricciones) ───────────────
+  android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Cambia --profile preview (APK) por production (AAB) cuando lo necesites
+      - name: Build Android
+        run: eas build --platform android --profile preview --non-interactive --no-wait
+
+  # ─────────── iOS (SOLO SIMULADOR — no requiere licencia Apple) ───────────
+  ios-simulator:
+    name: Build iOS (Simulator)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Perfil ios-simulator => ios.simulator:true => NO pide credenciales de Apple.
+      # El resultado es un .app que solo se instala en el Simulador de iOS (macOS + Xcode).
+      - name: Build iOS Simulator
+        run: eas build --platform ios --profile ios-simulator --non-interactive --no-wait

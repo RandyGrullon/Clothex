@@ -5,7 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Card, Chip } from '@/components/ui';
-import { generateOutfits } from '@/lib/ai';
+import { AI_ERROR_HINT, generateOutfits } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { listGarments, saveOutfit } from '@/lib/data';
 import { font, T } from '@/lib/theme';
@@ -41,7 +41,7 @@ export default function GenerateOutfit() {
       setSuggestions(valid);
       if (!valid.length) setError('La IA no encontró combinaciones. Prueba otro estilo o añade más prendas.');
     } catch (e: any) {
-      setError(`La IA no respondió (${e.message ?? e}). ¿Está corriendo ai-server?`);
+      setError(`La IA no respondió (${e.message ?? e}). ${AI_ERROR_HINT}`);
     } finally {
       setLoading(false);
     }

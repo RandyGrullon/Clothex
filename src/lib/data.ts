@@ -31,6 +31,15 @@ export async function saveModelPhoto(
   return url;
 }
 
+/** Guarda una foto de try-on generada (data URL) y devuelve su URL pública. */
+export async function saveTryonImage(userId: string, dataUrl: string): Promise<string> {
+  const [meta, b64] = dataUrl.split(',');
+  if (!b64) throw new Error('Imagen generada inválida');
+  const contentType = meta.match(/^data:(.*?)(;|$)/)?.[1] || 'image/png';
+  const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : 'png';
+  return uploadImage(userId, b64, `tryon.${ext}`, contentType);
+}
+
 // ---------- Storage ----------
 
 async function uploadImage(userId: string, b64: string, suffix: string, contentType: string) {

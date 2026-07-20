@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui';
-import { cutoutPerson } from '@/lib/ai';
+import { AI_ERROR_HINT, cutoutPerson } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { saveModelPhoto } from '@/lib/data';
 import { font, shadow, T } from '@/lib/theme';
@@ -57,7 +57,7 @@ export default function ModelScreen() {
       await refreshProfile();
       setAngleView(angle);
     } catch (e: any) {
-      setError(`No se pudo procesar la foto (${e.message ?? e}). ¿Está corriendo ai-server?`);
+      setError(`No se pudo procesar la foto (${e.message ?? e}). ${AI_ERROR_HINT}`);
     } finally {
       setBusy(null);
     }

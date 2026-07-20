@@ -81,6 +81,9 @@ create policy "garments delete own" on storage.objects
   for delete to authenticated
   using (bucket_id = 'garments' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- Lectura vía API limitada a la carpeta propia (evita que un anónimo con la
+-- clave pública pueda listar/enumerar los archivos, p. ej. tus fotos de modelo).
 drop policy if exists "garments read" on storage.objects;
 create policy "garments read" on storage.objects
-  for select using (bucket_id = 'garments');
+  for select to authenticated
+  using (bucket_id = 'garments' and (storage.foldername(name))[1] = auth.uid()::text);

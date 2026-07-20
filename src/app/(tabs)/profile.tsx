@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Card, Row } from '@/components/ui';
-import { AI_URL, aiHealth } from '@/lib/ai';
+import { AI_ERROR_HINT, AI_LABEL, AI_URL, aiHealth, HAS_TRYON, TRYON_HINT } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { font, T } from '@/lib/theme';
@@ -69,7 +69,7 @@ export default function Profile() {
         </Card>
 
         <Card style={{ marginTop: 16 }}>
-          <Text style={[font.label, { marginBottom: 4 }]}>IA local</Text>
+          <Text style={[font.label, { marginBottom: 4 }]}>{AI_LABEL}</Text>
           <View style={s.aiRow}>
             <View
               style={[s.dot, { backgroundColor: ai?.ok && ai?.ollama ? T.ok : T.danger }]}
@@ -80,10 +80,17 @@ export default function Profile() {
                 : ai.ok && ai.ollama
                   ? `Conectada (${ai.model})`
                   : ai.ok
-                    ? 'Servidor activo, pero Ollama no responde'
-                    : 'Sin conexión — ejecuta start-ai.bat en tu PC'}
+                    ? 'Servidor activo, pero el modelo no responde'
+                    : `Sin conexión — ${AI_ERROR_HINT}`}
             </Text>
           </View>
+          <View style={[s.aiRow, { marginTop: 6 }]}>
+            <View style={[s.dot, { backgroundColor: HAS_TRYON ? T.ok : T.danger }]} />
+            <Text style={font.body}>
+              {HAS_TRYON ? 'Generador de fotos (try-on): listo' : 'Generador de fotos: falta token'}
+            </Text>
+          </View>
+          {!HAS_TRYON ? <Text style={[font.small, { marginTop: 6 }]}>{TRYON_HINT}</Text> : null}
           <Text style={[font.small, { marginTop: 8 }]}>{AI_URL}</Text>
         </Card>
 

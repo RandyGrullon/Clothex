@@ -1,19 +1,28 @@
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Mannequin } from '@/components/mannequin';
 import { PhotoModel } from '@/components/photo-model';
-import { Chip } from '@/components/ui';
+import { Button, Chip } from '@/components/ui';
+import { generateTryOn, HAS_TRYON, TRYON_HINT } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
-import { getOutfit, listGarments } from '@/lib/data';
+import { getOutfit, listGarments, saveTryonImage } from '@/lib/data';
 import { font, T } from '@/lib/theme';
 import { CATEGORIES, MODEL_ANGLES, type Category, type Garment, type ModelAngle } from '@/lib/types';
 
+const TRYON_MSGS = [
+  'Leyendo tu foto…',
+  'Vistiéndote con las prendas…',
+  'Cuidando que tu cara quede idéntica…',
+  'Generando la imagen final…',
+  'Casi listo, puliendo detalles…',
+];
+
 export default function MannequinScreen() {
-  const { profile } = useAuth();
+  const { session, profile } = useAuth();
   const { wear, outfit } = useLocalSearchParams<{ wear?: string; outfit?: string }>();
   const [garments, setGarments] = useState<Garment[]>([]);
   // Una prenda seleccionada por categoría.
@@ -30,6 +39,21 @@ export default function MannequinScreen() {
     [profile],
   );
   const hasModel = !!(modelUrls.front || modelUrls.side || modelUrls.back);
+
+  // ---- Try-on generativo ----
+  const [tryonBusy, setTryonBusy] = useState(false);
+  const [tryonMsg, setTryonMsg] = useState(0);
+  const [tryonResult, setTryonResult] = useState<string | null>(null);
+  const [tryonError, setTryonError] = useState('');
+  const [tryonSaving, setTryonSaving] = useState(false);
+  const [tryonSaved, setTryonSaved] = useState(false);
+
+  useEffect(() => {
+    if (!tryonBusy) return;
+    setTryonMsg(0);
+    const t = setInterval(() => setTryonMsg((i) => (i + 1) % TRYON_MSGS.length), 4500);
+    return () => clearInterval(t);
+  }, [tryonBusy]);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,6 +97,42 @@ export default function MannequinScreen() {
       else next[g.category] = g.id;
       return next;
     });
+
+  const runTryon = async () => {
+    if (!modelUrls.front) {
+      setTryonError('Sube al menos tu foto de frente en "Mi modelo".');
+      return;
+    }
+    if (worn.length === 0) {
+      setTryonError('Selecciona al menos una prenda abajo.');
+      return;
+    }
+    setTryonError('');
+    setTryonResult(null);
+    setTryonSaved(false);
+    setTryonBusy(true);
+    try {
+      const img = await generateTryOn(modelUrls.front, worn, profile);
+      setTryonResult(img);
+    } catch (e: any) {
+      setTryonError(e?.message ?? String(e));
+    } finally {
+      setTryonBusy(false);
+    }
+  };
+
+  const saveTryon = async () => {
+    if (!session || !tryonResult || tryonSaving) return;
+    setTryonSaving(true);
+    try {
+      await saveTryonImage(session.user.id, tryonResult);
+      setTryonSaved(true);
+    } catch (e: any) {
+      setTryonError(e?.message ?? 'No se pudo guardar');
+    } finally {
+      setTryonSaving(false);
+    }
+  };
 
   const grouped = CATEGORIES.map((c) => ({
     ...c,
@@ -134,6 +194,58 @@ export default function MannequinScreen() {
                 Editar mis fotos
               </Text>
             </Pressable>
+
+            {/* Try-on generativo: foto tuya + prendas seleccionadas → imagen IA */}
+            <View style={{ width: '100%', paddingHorizontal: 20, gap: 10, marginTop: 4 }}>
+              <Button
+                title={tryonBusy ? 'Generando…' : '✨ Generar foto IA con este outfit'}
+                onPress={runTryon}
+                loading={tryonBusy}
+              />
+              {tryonBusy ? (
+                <Text style={[font.small, { textAlign: 'center' }]}>
+                  {TRYON_MSGS[tryonMsg]} Puede tardar hasta un minuto.
+                </Text>
+              ) : null}
+              {!HAS_TRYON && !tryonBusy ? (
+                <Text style={[font.small, { textAlign: 'center' }]}>{TRYON_HINT}</Text>
+              ) : null}
+              {tryonError ? (
+                <Text style={{ color: T.danger, fontSize: 13, textAlign: 'center' }}>
+                  {tryonError}
+                </Text>
+              ) : null}
+              {tryonResult ? (
+                <View style={s.tryonCard}>
+                  <Image
+                    source={{ uri: tryonResult }}
+                    style={s.tryonImg}
+                    contentFit="cover"
+                    transition={300}
+                  />
+                  <View style={{ flexDirection: 'row', gap: 10, padding: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        small
+                        title={tryonSaved ? '✓ Guardada' : 'Guardar'}
+                        onPress={saveTryon}
+                        loading={tryonSaving}
+                        disabled={tryonSaved}
+                        variant={tryonSaved ? 'ghost' : 'primary'}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        small
+                        title="Cerrar"
+                        variant="ghost"
+                        onPress={() => setTryonResult(null)}
+                      />
+                    </View>
+                  </View>
+                </View>
+              ) : null}
+            </View>
           </View>
         ) : (
           <View style={{ alignItems: 'center', marginTop: 4 }}>
@@ -206,6 +318,16 @@ const s = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tryonCard: {
+    backgroundColor: T.surface,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  tryonImg: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    backgroundColor: T.surfaceSoft,
   },
   pick: {
     width: 76,

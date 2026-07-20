@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Mannequin } from '@/components/mannequin';
 import { Button, Chip, Input } from '@/components/ui';
-import { processGarment } from '@/lib/ai';
+import { AI_ERROR_HINT, processGarment } from '@/lib/ai';
 import { useAuth } from '@/lib/auth';
 import { addGarment } from '@/lib/data';
 import { font, T } from '@/lib/theme';
@@ -71,9 +71,7 @@ export default function AddGarment() {
       setAnalysis(out.analysis);
       setStep('review');
     } catch (e: any) {
-      setError(
-        `La IA no respondió (${e.message ?? e}). ¿Está corriendo ai-server? Ejecuta start-ai.bat`,
-      );
+      setError(`La IA no respondió (${e.message ?? e}). ${AI_ERROR_HINT}`);
       setStep('pick');
     }
   };

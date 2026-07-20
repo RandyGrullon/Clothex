@@ -1,7 +1,16 @@
-// Cliente del servidor de IA local (ai-server: rembg + Ollama).
+// IA para NATIVO (iOS/Android): usa el ai-server local (rembg + Ollama).
+// El try-on generativo usa Pollinations (nube gratis) porque Ollama no genera
+// imágenes. La versión web/PWA está en ai.web.ts (todo nube, sin IA local).
 import type { Garment, GarmentAnalysis, OutfitSuggestion, Profile } from './types';
 
+import { generateTryOnCore, HAS_TRYON, TRYON_HINT } from './ai-core';
+
+export { HAS_TRYON, TRYON_HINT };
+
 export const AI_URL = process.env.EXPO_PUBLIC_AI_URL ?? 'http://localhost:8000';
+export const AI_KIND: 'local' | 'cloud' = 'local';
+export const AI_LABEL = 'IA local (rembg + Ollama)';
+export const AI_ERROR_HINT = '¿Está corriendo ai-server? Ejecuta start-ai.bat en tu PC.';
 
 async function post<T>(path: string, body: unknown, timeoutMs = 240_000): Promise<T> {
   const ctrl = new AbortController();
@@ -78,4 +87,13 @@ export async function generateOutfits(
   };
   const res = await post<{ outfits: OutfitSuggestion[] }>('/outfits', body);
   return res.outfits ?? [];
+}
+
+/** Foto generada del dueño con las prendas puestas (Pollinations, gratis). */
+export async function generateTryOn(
+  personUrl: string,
+  garments: Garment[],
+  profile: Profile | null,
+): Promise<string> {
+  return generateTryOnCore(personUrl, garments, profile);
 }

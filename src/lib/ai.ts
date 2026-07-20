@@ -40,6 +40,15 @@ export async function processGarment(
   return post('/process', { image_b64: imageB64 });
 }
 
+/** Quita el fondo de una foto de la persona (para el modelo/try-on). */
+export async function cutoutPerson(imageB64: string): Promise<string> {
+  const res = await post<{ cutout_b64: string }>('/cutout', {
+    image_b64: imageB64,
+    human: true,
+  });
+  return res.cutout_b64;
+}
+
 /** Genera outfits que combinen a partir del closet, para un estilo dado. */
 export async function generateOutfits(
   garments: Garment[],

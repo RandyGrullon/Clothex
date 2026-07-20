@@ -18,6 +18,7 @@ export default function RootLayout() {
         >
           <Stack.Screen name="add-garment" options={{ presentation: 'modal' }} />
           <Stack.Screen name="generate-outfit" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="model" options={{ presentation: 'modal' }} />
         </Stack>
       </AuthProvider>
     </GestureHandlerRootView>

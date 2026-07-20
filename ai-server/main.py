@@ -34,9 +34,26 @@ print("Cargando modelo de segmentación (u2net)…")
 REMBG_SESSION = new_session("u2net")
 print("Listo.")
 
+# Modelo específico para recortar personas (mejor que u2net para siluetas
+# humanas). Se carga la primera vez que se usa, para no retrasar el arranque.
+_HUMAN_SESSION = None
+
+
+def human_session():
+    global _HUMAN_SESSION
+    if _HUMAN_SESSION is None:
+        print("Cargando modelo de segmentación humana (u2net_human_seg)…")
+        _HUMAN_SESSION = new_session("u2net_human_seg")
+    return _HUMAN_SESSION
+
 
 class ProcessIn(BaseModel):
     image_b64: str
+
+
+class CutoutIn(BaseModel):
+    image_b64: str
+    human: bool = False
 
 
 class OutfitsIn(BaseModel):
@@ -115,6 +132,25 @@ async def health():
     except Exception:
         ollama_ok = has_model = False
     return {"ok": True, "ollama": ollama_ok and has_model, "model": VISION_MODEL}
+
+
+@app.post("/cutout")
+async def cutout(body: CutoutIn):
+    """Quita el fondo de una imagen (persona o prenda) y devuelve el PNG.
+    Con human=True usa el modelo de segmentación humana."""
+    try:
+        raw = base64.b64decode(body.image_b64)
+        img = Image.open(io.BytesIO(raw)).convert("RGB")
+    except Exception:
+        raise HTTPException(400, "Imagen inválida")
+
+    # Las fotos de persona conservan más detalle (cuerpo completo).
+    img = _downscale(img, 1280 if body.human else 1024)
+    session = human_session() if body.human else REMBG_SESSION
+    out = remove(img, session=session)
+    buf = io.BytesIO()
+    out.save(buf, format="PNG", optimize=True)
+    return {"cutout_b64": base64.b64encode(buf.getvalue()).decode()}
 
 
 @app.post("/process")

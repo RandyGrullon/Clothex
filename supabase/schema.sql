@@ -13,6 +13,9 @@ create table if not exists public.profiles (
   shirt_size text,
   pants_size text,
   shoe_size text,
+  model_front_url text,
+  model_side_url text,
+  model_back_url text,
   created_at timestamptz not null default now()
 );
 

@@ -92,4 +92,16 @@ export interface Profile {
   shirt_size: string | null;
   pants_size: string | null;
   shoe_size: string | null;
+  // Fotos del dueño recortadas (sin fondo) para el modelo/try-on.
+  model_front_url: string | null;
+  model_side_url: string | null;
+  model_back_url: string | null;
 }
+
+export type ModelAngle = 'front' | 'side' | 'back';
+
+export const MODEL_ANGLES: { key: ModelAngle; label: string; hint: string }[] = [
+  { key: 'front', label: 'Frente', hint: 'De frente, cuerpo completo' },
+  { key: 'side', label: 'Lado', hint: 'De perfil, cuerpo completo' },
+  { key: 'back', label: 'Espalda', hint: 'De espaldas, cuerpo completo' },
+];

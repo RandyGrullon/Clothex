@@ -1,13 +1,34 @@
 import { decode } from 'base64-arraybuffer';
 
 import { supabase } from './supabase';
-import type { Garment, GarmentAnalysis, Outfit, OutfitSuggestion, Profile } from './types';
+import type {
+  Garment,
+  GarmentAnalysis,
+  ModelAngle,
+  Outfit,
+  OutfitSuggestion,
+  Profile,
+} from './types';
 
 // ---------- Perfil ----------
 
 export async function upsertProfile(p: Partial<Profile> & { id: string }) {
   const { error } = await supabase.from('profiles').upsert(p);
   if (error) throw error;
+}
+
+/** Sube una foto (ya recortada) del dueño para un ángulo y guarda la URL. */
+export async function saveModelPhoto(
+  userId: string,
+  angle: ModelAngle,
+  cutoutB64: string,
+): Promise<string> {
+  const url = await uploadImage(userId, cutoutB64, `model-${angle}.png`, 'image/png');
+  const column =
+    angle === 'front' ? 'model_front_url' : angle === 'side' ? 'model_side_url' : 'model_back_url';
+  const { error } = await supabase.from('profiles').upsert({ id: userId, [column]: url });
+  if (error) throw error;
+  return url;
 }
 
 // ---------- Storage ----------
